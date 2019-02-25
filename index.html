@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Futurmap - Foncier</title>
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+	<link href="css/font-awesome.min.css" rel="stylesheet">
+	<link href="css/datepicker3.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    
+    <!--mapbox-->
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.51.0/mapbox-gl.css' rel='stylesheet' />
+
+    <script language="JavaScript"  src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-1.9.0.js"></script>
+	
+	<!--Custom Font-->
+	<link href="https://fonts.googleapis.com/css?family=Montserrat:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+	<!--[if lt IE 9]>
+	<script src="js/html5shiv.js"></script>
+	<script src="js/respond.min.js"></script>
+    <![endif]-->
+    <style>
+        #map { position:absolute; top:0; bottom:0; width: 97.7%; margin-top: 60px}
+        #map-container {margin: 0; padding: 0; height: 600px;}
+    </style>
+</head>
+<body>
+	<nav class="navbar navbar-custom navbar-fixed-top" role="navigation">
+		<div class="container-fluid">
+			<div class="navbar-header">
+				<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#sidebar-collapse"><span class="sr-only">Toggle navigation</span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span>
+					<span class="icon-bar"></span></button>
+				<a class="navbar-brand" href="#"><span>Futurmap</span>Foncier</a>
+			</div>
+		</div><!-- /.container-fluid -->
+	</nav>
+	<div id="sidebar-collapse" class="col-sm-3 col-lg-2 sidebar">
+
+		<ul class="nav menu">
+			<li class="active"><a href="index.html"><em class="fa fa-globe">&nbsp;</em> Acceuil</a></li>
+			<li><a href="charts.html"><em class="fa fa-map">&nbsp;</em> Parcelles</a></li>
+			<li class="parent "><a data-toggle="collapse" href="#sub-item-1">
+				<em class="fa fa-navicon">&nbsp;</em> Fokontany <span data-toggle="collapse" href="#sub-item-1" class="icon pull-right"><em class="fa fa-plus"></em></span>
+				</a>
+				<ul class="children collapse" id="sub-item-1">
+					<li><a class="" href="#">
+						<span class="fa fa-arrow-right">&nbsp;</span> Andranomahery
+					</a></li>
+					<li><a class="" href="#">
+						<span class="fa fa-arrow-right">&nbsp;</span> Androndrakely
+					</a></li>
+					<li><a class="" href="#">
+						<span class="fa fa-arrow-right">&nbsp;</span> Ankadimbahoaka
+					</a></li>
+				</ul>
+			</li>
+			<li><a href="login.html"><em class="fa fa-power-off">&nbsp;</em> Logout</a></li>
+		</ul>
+	</div><!--/.sidebar-->
+		
+	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main">
+		<div class="row">
+			<ol class="breadcrumb">
+				<li><a href="#">
+					<em class="fa fa-home"></em>
+				</a></li>
+				<li class="active">Acceuil</li>
+			</ol>
+		</div><!--/.row-->
+		
+		<div class="row">
+			<div class="col-lg-12">
+				<h1 class="page-header">Acceuil</h1>
+			</div>
+		</div><!--/.row-->
+		
+		<div class="panel panel-container">
+			<div class="row">
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-teal panel-widget border-right">
+						<div class="row no-padding">
+							<div class="large">2</div>
+							<div class="text-muted">Régions</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-blue panel-widget border-right">
+						<div class="row no-padding">
+							<div class="large">5</div>
+							<div class="text-muted">Communes</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-orange panel-widget border-right">
+						<div class="row no-padding">
+							<div class="large">7</div>
+							<div class="text-muted">Fokontany</div>
+						</div>
+					</div>
+				</div>
+				<div class="col-xs-6 col-md-3 col-lg-3 no-padding">
+					<div class="panel panel-red panel-widget ">
+						<div class="row no-padding">
+							<div class="large">17</div>
+							<div class="text-muted">Parcelles</div>
+						</div>
+					</div>
+				</div>
+			</div><!--/.row-->
+		</div>
+		<div class="row">
+			<div class="col-md-12">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						Les parcelles à Madagascar
+                    </div>	
+                <div id='map-container'>
+                    <div id='map' class='map'></div>
+                </div>	
+				
+						
+			</div>
+		</div><!--/.row-->
+		
+		
+		
+	<script src="js/jquery-1.11.1.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/bootstrap-datepicker.js"></script>
+    <script src="js/custom.js"></script>
+    
+	<script>
+	
+        if (!('remove' in Element.prototype)) {
+             Element.prototype.remove = function() {
+            if (this.parentNode) {
+                this.parentNode.removeChild(this);
+            }
+            };
+         }
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoiZmFuZXZhIiwiYSI6ImNqZGxhOW5rMDA0bnkzM3A4MmJldm8ydmQifQ.EKyPWlXVcZ6ZcP_5ve6GOQ';
+
+      
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/faneva/cjqp6xf6w7khy2smwmae70yap',
+            center: [47.527, -18.989],
+            zoom: 6
+        });
+
+    map.on("load", function(e) {
+
+        map.addSource("region", {
+            "type": "geojson",
+            "data": "data/region.geojson"
+        });
+
+        
+        map.addLayer({
+            "id": "Region",
+            "type": "line",
+            "source": "region",
+            "layout": {},
+            "paint": {
+                "line-color": "#6d96cc",
+                "line-width": 2,
+                "line-opacity": .8
+            },
+        });
+      
+
+        map.addSource("site", {
+            "type": "geojson",
+            "data": "data/site.geojson"
+        });
+
+
+        map.addLayer({
+            "id": "Site",
+            "type": "fill",
+            "source": "site",
+            "layout": {},
+            "paint": {
+                "fill-color": "red",
+                "fill-opacity": .8
+            },
+        });
+
+        })
+
+	</script>
+		
+</body>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+</html>
