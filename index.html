@@ -22,8 +22,8 @@
 	<script src="js/respond.min.js"></script>
     <![endif]-->
     <style>
-        #map { position:absolute; top:0; bottom:0; width: 97.7%}
-        #map-container {margin: 0; padding: 0; height: 650px;}
+        #map { position:absolute; top:0; bottom:0; width: 100%}
+        #map-container {margin: 0; padding: 0; height: 670px;}
     </style>
 </head>
 <body>
@@ -43,12 +43,19 @@
 		<ul class="nav menu">
 			
 			<li class="parent "><a data-toggle="collapse" href="#sub-item-1">
-				<em class="fa fa-map">&nbsp;</em> Parcelles <span data-toggle="collapse" href="#sub-item-1" class="icon pull-right"><em class="fa fa-plus"></em></span>
+				Parcelles <span data-toggle="collapse" href="#sub-item-1" class="icon pull-right"><em class="fa fa-plus"></em></span>
 				</a>
 				<ul class="children collapse" id="sub-item-1">
 				</ul>
 			</li>
-			<li><a href="login.html"><em class="fa fa-power-off">&nbsp;</em> Logout</a></li>
+
+			<li class="parent "><a data-toggle="collapse" href="#sub-item-2">
+				Parcelles <span data-toggle="collapse" href="#sub-item-2" class="icon pull-right"><em class="fa fa-plus"></em></span>
+				</a>
+				<ul class="children collapse" id="sub-item-2">
+				</ul>
+			</li>
+			
 		</ul>
 	</div><!--/.sidebar-->
 		
@@ -64,11 +71,9 @@
 		
 		
 		<div class="row">
-			<div class="col-md-12">
-                <div id='map-container'>
-                    <div id='map' class='map'></div>
-                </div>		
-			</div>
+            <div id='map-container'>
+                <div id='map' class='map'></div>
+            </div>		
 		</div><!--/.row-->
 		
 		
@@ -110,28 +115,21 @@
     		borne = json;
 		});
 
-		window.onload = function(){
-			
-			document.getElementById('region_number').innerHTML = getUniqueValueSite("REGION").length;
-			document.getElementById('city_number').innerHTML = getUniqueValueSite("VILLE").length;
-			document.getElementById('fkt_number').innerHTML = getUniqueValueSite("NOM").length;
-			document.getElementById('parcelles_number').innerHTML = parcelle.features.length;
-
-		};
-
+		
         mapboxgl.accessToken = 'pk.eyJ1IjoiZmFuZXZhIiwiYSI6ImNqZGxhOW5rMDA0bnkzM3A4MmJldm8ydmQifQ.EKyPWlXVcZ6ZcP_5ve6GOQ';
 
       
         var map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/faneva/cjqp6xf6w7khy2smwmae70yap',
+            style: 'mapbox://styles/mapbox/outdoors-v10',
             center: [47.527, -18.989],
-            zoom: 6
+            zoom: 5
         });
 		
-		
+
 		map.on("load", function(e) {
 
+			// add sources
 			map.addSource("parcelle", {
 				"type": "geojson",
 				"data": parcelle
@@ -146,49 +144,44 @@
 				"type": "geojson",
 				"data": region
 			});
-
-			map.addLayer({
-				"id": "Borne",
-				"type": "circle",
-				"source": "borne",
 			
-			});
-
-			map.addLayer({
-				"id": "Region",
-				"type": "line",
-				"source": "region",
-				"layout": {},
-				"paint": {
-					"line-color": "#6d96cc",
-					"line-width": 2,
-					"line-opacity": .8
-				},
-			});
+			map.addSource("site", {
+					"type": "geojson",
+					"data": site
+				});
 
 			map.addSource("region_existed", {
 				"type": "geojson",
 				"data": getRegion()
 			});
 
-			
+			// add layers
+
 			map.addLayer({
-				"id": "Region existed",
-				"type": "fill",
-				"source": "region_existed",
-				"layout": {},
-				"paint": {
-					"fill-color": "#6d96cc",
-					"fill-opacity": 0.8
+				"id": "Borne",
+				"type": "symbol",
+				"source": "borne",
+				"interactive": true,
+				"layout": {
+					"text-field": "IF",
+					"icon-image": "marker-16",
 				},
+				"paint": {
+					"text-color": {
+						property: 'EXISTANTE',
+                           type:  'categorical',
+                           stops: [
+                            ['OUI', '#b35a2a'],
+                            ['NON', '#377eb8'],
+                            
+                          ]
+						},
+					"text-halo-width": 2,
+					
+					
+				}
+			
 			});
-		
-
-			map.addSource("site", {
-				"type": "geojson",
-				"data": site
-			});
-
 
 			map.addLayer({
 				"id": "Site",
@@ -212,16 +205,63 @@
 				},
 			});
 
-			fokontanyList(site, map)
-		});
+			map.addLayer({
+				"id": "Region",
+				"type": "line",
+				"source": "region",
+				"layout": {},
+				"paint": {
+					"line-color": "#6d96cc",
+					"line-width": 2,
+					"line-opacity": .8
+				},
+			});
 
-		map.on('zoomend', function() {
-			if (map.getZoom() >12){
-					map.removeLayer('Region existed');
-			}
-			
-		});
+			map.addLayer({
+				"id": "Region existed",
+				"type": "fill",
+				"source": "region_existed",
+				"layout": {},
+				"paint": {
+					"fill-color": "#6d96cc",
+					"fill-opacity": 0.8
+				},
+			});
 		
+			parecelleList(site, map)
+			map.on("click", "Borne", function (e) {
+				new mapboxgl.Popup()
+					.setLngLat(e.lngLat)
+					.setHTML('<h1 classe="item">Borne IF</h1>'+
+						'<p><span>Existant:	</span>' 
+						+e.features[0].properties.EXISTANTE+
+						'</p>'+
+						'<p><span>Parcelle:	</span>' 
+						+e.features[0].properties.PARCELLE+
+						'</p>'+
+						'<p><span>Numero:	</span>' 
+						+e.features[0].properties.NUMERO+
+						'</p>'
+					)
+					.addTo(map);
+			});
+
+			map.on('zoomend', function() {
+				if (map.getZoom() >12){
+						map.removeLayer('Region existed');
+				}
+				
+			});
+
+			map.on("mouseenter", "Borne", function () {
+				map.getCanvas().style.cursor = "pointer";
+			});
+
+			map.on("mouseleave", "Borne", function () {
+				map.getCanvas().style.cursor = "";
+			});
+		//end 
+		});
 
 		function getUniqueValueSite(entity)
 		{
@@ -259,9 +299,9 @@
 				
 		}
 		
-		function fokontanyList(data, map){
+		function parecelleList(data, map){
 			site_nom = getUniqueValueSite("NOM")
-			var listings = document.getElementById('sub-item-1')
+			var listings = document.getElementById('sub-item-2')
 			for (inom =0; inom < site_nom.length; inom++){
 				
 				var listing = listings.appendChild(document.createElement('li'))
@@ -279,7 +319,7 @@
 					// 1. Fly to the point associated with the clicked link
 					flyToSite(clickedListing);
 					// 2. Close all other popups and display popup for clicked store
-					// createPopUp(clickedListing);
+					createPopUp(clickedListing);
 					// 3. Highlight listing in sidebar (and remove highlight for all other listings)
 					
 					
@@ -292,9 +332,54 @@
 					zoom: 17
 				});
 			}
+
+			function createPopUp(currentFeature) {
+				var popUps = document.getElementsByClassName('mapboxgl-popup');
+				// Check if there is already a popup on the map and if so, remove it
+				if (popUps[0]) popUps[0].remove();
+
+				var popup = new mapboxgl.Popup({ closeOnClick: true })
+					.setLngLat(currentFeature.geometry.coordinates[0][0][0])
+					.setHTML('<div>'+
+					'<h5>'+ currentFeature.properties.NOM + '</h5>' +
+					'</div>'
+					)
+					.addTo(map);
+
+			}
 		
 	</script>
+
+<style>
+	.mapboxgl-popup-content h1 {
+		background: #fff;
+		color: rgb(48, 165, 255);
+		border-bottom: 1px solid rgb(48, 165, 255);;
+		margin: 0;
+		display: block;
+		padding: 8px;
+		border-radius: 3px 3px 0 0;
+		font-weight: 600;
+		margin-top: -10px;
+		font-size: 15px;
+		width: 150px; 
+		text-align: center
+	}
+
+	.mapboxgl-popup-content p {
+		margin: 0;
+		background: #fff;
+		color: #4a4d4b;
+		border-radius: 3px 3px 0 0;
+		font-weight: 600;
+		margin-top: 10px;
+		font-size: 13px;
+		width: 150px; 
+		padding-left: 10px
 		
+	}
+
+</style>
 </body>
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
