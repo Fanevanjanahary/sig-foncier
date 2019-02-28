@@ -40,22 +40,7 @@
 	</nav>
 	<div id="sidebar-collapse" class="col-sm-3 col-lg-2 sidebar">
 
-		<ul class="nav menu">
-			
-			<li class="parent "><a data-toggle="collapse" href="#sub-item-1">
-				Parcelles <span data-toggle="collapse" href="#sub-item-1" class="icon pull-right"><em class="fa fa-plus"></em></span>
-				</a>
-				<ul class="children collapse" id="sub-item-1">
-				</ul>
-			</li>
-
-			<li class="parent "><a data-toggle="collapse" href="#sub-item-2">
-				Parcelles <span data-toggle="collapse" href="#sub-item-2" class="icon pull-right"><em class="fa fa-plus"></em></span>
-				</a>
-				<ul class="children collapse" id="sub-item-2">
-				</ul>
-			</li>
-			
+		<ul class="nav menu" id="site">
 		</ul>
 	</div><!--/.sidebar-->
 		
@@ -126,9 +111,10 @@
             zoom: 5
         });
 		
-
+		
 		map.on("load", function(e) {
 
+			createSideBar(map)
 			// add sources
 			map.addSource("parcelle", {
 				"type": "geojson",
@@ -228,7 +214,6 @@
 				},
 			});
 		
-			parecelleList(site, map)
 			map.on("click", "Borne", function (e) {
 				new mapboxgl.Popup()
 					.setLngLat(e.lngLat)
@@ -239,7 +224,7 @@
 						'<p><span>Parcelle:	</span>' 
 						+e.features[0].properties.PARCELLE+
 						'</p>'+
-						'<p><span>Numero:	</span>' 
+						'<p style="padding-bottom:15px;"><span>Numero:	</span>' 
 						+e.features[0].properties.NUMERO+
 						'</p>'
 					)
@@ -299,58 +284,175 @@
 				
 		}
 		
-		function parecelleList(data, map){
+		function createSideBar(map){
 			site_nom = getUniqueValueSite("NOM")
-			var listings = document.getElementById('sub-item-2')
+			var sites = document.getElementById('site')
+			
 			for (inom =0; inom < site_nom.length; inom++){
 				
-				var listing = listings.appendChild(document.createElement('li'))
-				var link = listing.appendChild(document.createElement('a'))
-				link.href = '#';
-				link.className = 'title';
-				link.dataPosition = inom;
-				var span = link.appendChild(document.createElement('span'))
-				span.className = 'fa fa-map-marker'
-				span.innerHTML = '&nbsp;'+ site_nom[inom]
+				//create element 
+				var toggle =  document.createAttribute('data-toggle');
+				toggle.value = 'collapse';
+
+				var li_sites = sites.appendChild(document.createElement('li'))
+				li_sites.className =  'parent';
+				var link_sites = li_sites.appendChild(document.createElement('a'))
+				link_sites.href = '#sub-item-'+ inom;
+				link_sites.innerHTML = site_nom[inom];
+				link_sites.setAttributeNode(toggle);
+
+				var span_sites = link_sites.appendChild(document.createElement('span'))
+				span_sites.className = 'icon pull-right'
+				//span_sites.setAttributeNode(toggle);
+				span_sites.href= '#sub-item-'+ inom;
+
+				var em = span_sites.appendChild(document.createElement('em'))
+				em.className = 'fa fa-plus';
+
+				var ul_parcelle = li_sites.appendChild(document.createElement('ul'));
+				ul_parcelle.className = 'children collapse';
+				ul_parcelle.id = 'sub-item-'+ inom;
+				var listings = document.getElementById('sub-item-'+ inom);
+				for (iparc=0; iparc< parcelle.features.length; iparc ++){
+
+					if (parcelle.features[iparc].properties["IDSITE"] == getIdsite(site_nom[inom])){
+						var listing = listings.appendChild(document.createElement('li'))
+						var link = listing.appendChild(document.createElement('a'))
+						link.href = '#';
+						link.className = 'title';
+						link.dataPosition = iparc;
+						link.innerHTML = parcelle.features[iparc].properties["TN"];
+						link.addEventListener('click', function(e) {
+							// Update the currentFeature to the store associated with the clicked link
+							var clickedListing = parcelle.features[this.dataPosition];
+							// 1. Fly to the point associated with the clicked link
+							flyToSite(clickedListing);
+							// 2. Close all other popups and display popup for clicked store
+							createPopUp(clickedListing);
+							// 3. Highlight listing in sidebar (and remove highlight for all other listings)
+							var activeItem = document.getElementsByClassName('active');
+							if (activeItem[0]) {
+								activeItem[0].classList.remove('active');
+							}
+							this.parentNode.classList.add('active');
+						});
+					}
+
+				}
 				
-				link.addEventListener('click', function(e) {
-					// Update the currentFeature to the store associated with the clicked link
-					var clickedListing = data.features[this.dataPosition];
-					// 1. Fly to the point associated with the clicked link
-					flyToSite(clickedListing);
-					// 2. Close all other popups and display popup for clicked store
-					createPopUp(clickedListing);
-					// 3. Highlight listing in sidebar (and remove highlight for all other listings)
-					
-					
-				})
 			}
 		};
 			function flyToSite(currentFeature) {
+				point = currentFeature.properties["CENTROID"].split(',').map(function(n) {return Number(n);})
 				map.flyTo({
-					center: currentFeature.geometry.coordinates[0][0][0],
+					center: point,
 					zoom: 17
 				});
 			}
 
 			function createPopUp(currentFeature) {
+				point = currentFeature.properties["CENTROID"].split(',').map(function(n) {return Number(n);})
 				var popUps = document.getElementsByClassName('mapboxgl-popup');
 				// Check if there is already a popup on the map and if so, remove it
 				if (popUps[0]) popUps[0].remove();
-
+				site_nom = getSiteName(currentFeature.properties["IDSITE"])
 				var popup = new mapboxgl.Popup({ closeOnClick: true })
-					.setLngLat(currentFeature.geometry.coordinates[0][0][0])
-					.setHTML('<div>'+
-					'<h5>'+ currentFeature.properties.NOM + '</h5>' +
+					.setLngLat(point)
+					.setHTML(
+					'<h5>'+ currentFeature.properties.TN + '</h5>' +
+					'<div class="container">'+
+					'<div class="row">'+
+					'<div class="col-6">'+
+					'<img src="data/documents/'+site_nom+'/'+site_nom+'.png" class="rounded float-left" width="50%">'+
+					'</div>'+
+					'<div class="col-6">'+
+					'<ul class="list-group">'+
+						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
+						'NOM'+
+						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.NOM+'</span>'+
+						'</li>'+
+						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
+						'TN'+
+						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.TN+'</span>'+
+						'</li>'+
+						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
+						'INDICE'+
+						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.INDICE+'</span>'+
+						'</li>'+
+						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
+						'NUMERO'+
+						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.NUMERO+'</span>'+
+						'</li>'+
+						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
+							'CONTENANCE'+
+						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.CONTENANCE+' m²</span>'+
+						'</li>'+
+						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
+						'LITIGE'+
+						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.LITIGE+'</span>'+
+						'</li>'+
+						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
+							'OBJET DU LITIGE'+
+						'<span class="badge badge-primary badge-pill"></span>'+
+						'</li>'+
+					'</ul>'+
+					'</div>'+
+					'</div>'+
 					'</div>'
-					)
-					.addTo(map);
+				)
+				.addTo(map);
+			}
 
+			function getIdsite(name){
+				for(i_s = 0; i_s< site.features.length; i_s++){
+					if (site.features[i_s].properties["NOM"] == name){
+						return site.features[i_s].properties["IDSITE"]
+					}
+				} 
+			}
+
+			function getSiteName(idsite){
+				for(i_s = 0; i_s< site.features.length; i_s++){
+					if (site.features[i_s].properties["IDSITE"] == idsite){
+						return site.features[i_s].properties["NOM"]
+					}
+				} 
 			}
 		
 	</script>
 
 <style>
+
+	.mapboxgl-popup-close-button {
+		display: none;
+	}
+
+	.mapboxgl-popup-content {
+		font: 400 11px/15px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+		padding: 0;
+	}
+
+	.mapboxgl-popup-content-wrapper {
+		padding: 1%;
+	}
+
+	.mapboxgl-popup-content h5 {
+		background: rgb(48, 165, 255);
+		color: #fff;
+		margin: 0;
+		display: block;
+		padding: 5px;
+		border-radius: 3px 3px 0 0;
+		font-weight: 700;
+		margin-top: -15px;
+	}
+
+	.mapboxgl-popup-content h6 {
+		margin: 0;
+		display: block;
+		padding: 5px;
+		font-weight: 400;
+	}
 	.mapboxgl-popup-content h1 {
 		background: #fff;
 		color: rgb(48, 165, 255);
@@ -377,6 +479,42 @@
 		width: 150px; 
 		padding-left: 10px
 		
+	}
+
+	.mapboxgl-popup-content img {
+		display: block;
+		padding: 5px;
+		border-radius: 3px 3px 0 0;
+		font-weight: 700;
+		margin-top: 5px;
+	}
+
+	.mapboxgl-popup-content ul {
+		padding: 5px;
+		font-weight: 600;
+		margin-top: 5px;
+		font-size: 13px;
+	}
+
+	.badge-primary {
+		color: #0b0a0a;
+		background-color: #0c0c0c4d;
+	}
+
+	.mapboxgl-popup-content .container{
+		width: 600px;
+	}
+
+	.mapboxgl-container .leaflet-marker-icon {
+		cursor: pointer;
+	}
+
+	.mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+		margin-top: 15px;
+	}
+
+	.mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
+		border-bottom-color: rgb(48, 165, 255);
 	}
 
 </style>
