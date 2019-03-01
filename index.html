@@ -23,7 +23,7 @@
     <![endif]-->
     <style>
         #map { position:absolute; top:0; bottom:0; width: 100%}
-        #map-container {margin: 0; padding: 0; height: 702px;}
+        #map-container {margin: 0; padding: 0; width: 100%}
     </style>
 </head>
 <body>
@@ -44,16 +44,11 @@
 		</ul>
 	</div><!--/.sidebar-->
 		
-	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main width='100%'">
-		<div class="row">
-		</div><!--/.row-->
-		
-		
-		<div class="row">
-            <div id='map-container'>
-                <div id='map' class='map'></div>
-            </div>		
-		</div><!--/.row-->
+	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main ">      
+	</div>
+	<div id='map-container' >
+		<div id='map' class='map'></div>
+	</div>
 		
 		
 	<!--
@@ -327,7 +322,7 @@
 						link.href = '#';
 						link.className = 'title';
 						link.dataPosition = iparc;
-						link.innerHTML = parcelle.features[iparc].properties["TN"];
+						link.innerHTML = 'Titre n° '+parcelle.features[iparc].properties["TN"];
 						link.addEventListener('click', function(e) {
 							// Update the currentFeature to the store associated with the clicked link
 							var clickedListing = parcelle.features[this.dataPosition];
@@ -362,21 +357,16 @@
 				// Check if there is already a popup on the map and if so, remove it
 				if (popUps[0]) popUps[0].remove();
 				site_nom = getSiteName(currentFeature.properties["IDSITE"])
-				var popup = new mapboxgl.Popup({ closeOnClick: true })
+				var popup = new mapboxgl.Popup({ 
+					offset: 25,
+					 closeOnClick: true 
+					 })
 					.setLngLat(point)
 					.setHTML('<div class="popup-parc">'+
-					'<h5>'+ currentFeature.properties.TN + '</h5>' +
-					'<div class="img">'+
-					'<img src="data/documents/'+site_nom+'/'+site_nom+'.png" class="rounded float-left image" width="50%">'+
-					'<div class="middle">'+
-					'<a href="data/documents/'+site_nom+'/'+currentFeature.properties["PF"]+'">'+
-    				'<div class="text"><i class="fa fa-download"></i> Télécharger</div>'+
-					'</a>'+
-  					'</div>'+
-					'</div>'+
+					'<h5> Titre n° '+ currentFeature.properties.TN + '</h5>' +
 					'<ul class="list-group">'+
 						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
-						'NOM'+
+						'NOM DU PROPRIETAIRE'+
 						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.NOM+'</span>'+
 						'</li>'+
 						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
@@ -401,9 +391,17 @@
 						'</li>'+
 						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
 							'OBJET DU LITIGE'+
-						'<span class="badge badge-primary badge-pill"></span>'+
+						'<span class="badge badge-primary badge-pill">OCCUPATION ILLICITE</span>'+
 						'</li>'+
 					'</ul>'+
+					'<div class="img">'+
+					'<img src="data/documents/'+site_nom+'/'+site_nom+'.png" class="rounded image" width="100%">'+
+					'<div class="middle">'+
+					'<a href="data/documents/'+site_nom+'/'+currentFeature.properties["PF"]+'">'+
+    				'<div class="text"><i class="fa fa-download"></i> Télécharger</div>'+
+					'</a>'+
+  					'</div>'+
+					'</div>'+
 					'</div>'
 				)
 				.addTo(map);
@@ -490,7 +488,7 @@
 	.mapboxgl-popup-content img {
 		display: block;
 		padding: 5px;
-		border-radius: 3px 3px 0 0;
+		border-radius: 3px;
 		font-weight: 700;
 		margin-top: 5px;
 		border: 1px solid #ddd;
@@ -509,7 +507,7 @@
 	}
 
 	.mapboxgl-popup-content .popup-parc{
-		width: 600px;
+		width: 300px;
 	}
 
 	.mapboxgl-container .leaflet-marker-icon {
@@ -542,8 +540,8 @@
 
 	.img {
 		position: relative;
-		width: 50%;
-		padding-left: 5px;
+		width: 100%;
+		padding: 5px;
 	}
 
 	.image {
@@ -560,7 +558,7 @@
 		opacity: 0;
 		position: absolute;
 		left: 50%;
-		margin-top: 30%;
+		top: 50%;
 		transform: translate(-50%, -50%);
 		-ms-transform: translate(-50%, -50%);
 		text-align: center;
@@ -597,6 +595,10 @@
 		height:30px;
 		border-radius: 50%;
 		cursor: pointer;
+	}
+
+	.col-lg-10 {
+		padding: 0
 	}
 
 
