@@ -23,7 +23,7 @@
     <![endif]-->
     <style>
         #map { position:absolute; top:0; bottom:0; width: 100%}
-        #map-container {margin: 0; padding: 0; height: 670px;}
+        #map-container {margin: 0; padding: 0; height: 702px;}
     </style>
 </head>
 <body>
@@ -46,12 +46,6 @@
 		
 	<div class="col-sm-9 col-sm-offset-3 col-lg-10 col-lg-offset-2 main width='100%'">
 		<div class="row">
-			<ol class="breadcrumb">
-				<li><a href="#">
-					<em class="fa fa-map"></em>
-				</a></li>
-				<li class="active">Parcelles</li>
-			</ol>
 		</div><!--/.row-->
 		
 		
@@ -106,7 +100,7 @@
       
         var map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/outdoors-v10',
+            style: 'mapbox://styles/mapbox/satellite-v9',
             center: [47.527, -18.989],
             zoom: 5
         });
@@ -142,32 +136,6 @@
 			});
 
 			// add layers
-
-			map.addLayer({
-				"id": "Borne",
-				"type": "symbol",
-				"source": "borne",
-				"interactive": true,
-				"layout": {
-					"text-field": "IF",
-					"icon-image": "marker-16",
-				},
-				"paint": {
-					"text-color": {
-						property: 'EXISTANTE',
-                           type:  'categorical',
-                           stops: [
-                            ['OUI', '#b35a2a'],
-                            ['NON', '#377eb8'],
-                            
-                          ]
-						},
-					"text-halo-width": 2,
-					
-					
-				}
-			
-			});
 
 			map.addLayer({
 				"id": "Site",
@@ -213,6 +181,32 @@
 					"fill-opacity": 0.8
 				},
 			});
+
+			// create marker
+			borne.features.forEach(function(marker) {
+
+				// create a HTML element for each feature
+				var el = document.createElement('div');
+				el.className = 'marker-'+marker.properties.EXISTANTE;
+
+				// make a marker for each feature and add to the map
+				new mapboxgl.Marker(el)
+				.setLngLat(marker.geometry.coordinates)
+				.setPopup(new mapboxgl.Popup()
+					.setHTML('<h1 classe="item">Borne IF</h1>'+
+							'<p><span>Existant:	</span>' 
+							+marker.properties.EXISTANTE+
+							'</p>'+
+							'<p><span>Parcelle:	</span>' 
+							+marker.properties.PARCELLE+
+							'</p>'+
+							'<p style="padding-bottom:15px;"><span>Numero:	</span>' 
+							+marker.properties.NUMERO+
+							'</p>'
+						)
+				)
+				.addTo(map);
+			});
 		
 			map.on("click", "Borne", function (e) {
 				new mapboxgl.Popup()
@@ -231,6 +225,10 @@
 					.addTo(map);
 			});
 
+			map.on("click", "Parcelle", function (e) {
+				createPopUp(e.features[0])
+			});
+
 			map.on('zoomend', function() {
 				if (map.getZoom() >12){
 						map.removeLayer('Region existed');
@@ -243,6 +241,14 @@
 			});
 
 			map.on("mouseleave", "Borne", function () {
+				map.getCanvas().style.cursor = "";
+			});
+
+			map.on("mouseenter", "Parcelle", function () {
+				map.getCanvas().style.cursor = "pointer";
+			});
+
+			map.on("mouseleave", "Parcelle", function () {
 				map.getCanvas().style.cursor = "";
 			});
 		//end 
@@ -358,14 +364,16 @@
 				site_nom = getSiteName(currentFeature.properties["IDSITE"])
 				var popup = new mapboxgl.Popup({ closeOnClick: true })
 					.setLngLat(point)
-					.setHTML(
+					.setHTML('<div class="popup-parc">'+
 					'<h5>'+ currentFeature.properties.TN + '</h5>' +
-					'<div class="container">'+
-					'<div class="row">'+
-					'<div class="col-6">'+
-					'<img src="data/documents/'+site_nom+'/'+site_nom+'.png" class="rounded float-left" width="50%">'+
+					'<div class="img">'+
+					'<img src="data/documents/'+site_nom+'/'+site_nom+'.png" class="rounded float-left image" width="50%">'+
+					'<div class="middle">'+
+					'<a href="data/documents/'+site_nom+'/'+currentFeature.properties["PF"]+'">'+
+    				'<div class="text"><i class="fa fa-download"></i> Télécharger</div>'+
+					'</a>'+
+  					'</div>'+
 					'</div>'+
-					'<div class="col-6">'+
 					'<ul class="list-group">'+
 						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
 						'NOM'+
@@ -396,8 +404,6 @@
 						'<span class="badge badge-primary badge-pill"></span>'+
 						'</li>'+
 					'</ul>'+
-					'</div>'+
-					'</div>'+
 					'</div>'
 				)
 				.addTo(map);
@@ -487,6 +493,7 @@
 		border-radius: 3px 3px 0 0;
 		font-weight: 700;
 		margin-top: 5px;
+		border: 1px solid #ddd;
 	}
 
 	.mapboxgl-popup-content ul {
@@ -501,7 +508,7 @@
 		background-color: #0c0c0c4d;
 	}
 
-	.mapboxgl-popup-content .container{
+	.mapboxgl-popup-content .popup-parc{
 		width: 600px;
 	}
 
@@ -516,6 +523,82 @@
 	.mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
 		border-bottom-color: rgb(48, 165, 255);
 	}
+
+	.float-left {
+    	float: left !important;
+	}
+
+	.list-group {
+		display: -webkit-box;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-box-orient: vertical;
+		-webkit-box-direction: normal;
+		-ms-flex-direction: column;
+		flex-direction: column;
+		padding-left: 0;
+		margin-bottom: 0;
+	}
+
+	.img {
+		position: relative;
+		width: 50%;
+		padding-left: 5px;
+	}
+
+	.image {
+		opacity: 1;
+		display: block;
+		width: 100%;
+		height: auto;
+		transition: .5s ease;
+		backface-visibility: hidden;
+	}
+
+	.middle {
+		transition: .5s ease;
+		opacity: 0;
+		position: absolute;
+		left: 50%;
+		margin-top: 30%;
+		transform: translate(-50%, -50%);
+		-ms-transform: translate(-50%, -50%);
+		text-align: center;
+	}
+
+	.img:hover .image {
+		opacity: 0.3;
+	}
+
+	.img:hover .middle {
+		opacity: 1;
+	}
+
+	.text {
+		background-color: rgb(48, 165, 255);
+		color: white;
+		font-size: 16px;
+		padding: 16px 32px;
+	}
+
+	.marker-OUI {
+		background-image: url('icon/oui.png');
+		background-size: cover;
+		width: 30px;
+		height:30px;
+		border-radius: 50%;
+		cursor: pointer;
+	}
+
+	.marker-NON {
+		background-image: url('icon/non.png');
+		background-size: cover;
+		width: 30px;
+		height:30px;
+		border-radius: 50%;
+		cursor: pointer;
+	}
+
 
 </style>
 </body>
