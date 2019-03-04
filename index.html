@@ -94,7 +94,7 @@
     		site_point = json;
 		});
 
-		var zoom = 10
+		var zoom = 13
         mapboxgl.accessToken = 'pk.eyJ1IjoiZmFuZXZhIiwiYSI6ImNqZGxhOW5rMDA0bnkzM3A4MmJldm8ydmQifQ.EKyPWlXVcZ6ZcP_5ve6GOQ';
 
       
@@ -175,7 +175,7 @@
 				"id": "Region",
 				"type": "line",
 				"source": "region",
-				'maxzoom': zoom,
+				'maxzoom': zoom - 3,
 				"layout": {},
 				"paint": {
 					"line-color": "#6d96cc",
@@ -188,7 +188,7 @@
 				"id": "Region existed",
 				"type": "fill",
 				"source": "region_existed",
-				'maxzoom': zoom,
+				'maxzoom': zoom - 3,
 				"layout": {},
 				"paint": {
 					"fill-color": "#6d96cc",
@@ -239,6 +239,19 @@
 				// make a marker for each feature and add to the map
 				marker = new mapboxgl.Marker(el)
 					.setLngLat(marker.geometry.coordinates)
+					.setPopup(new mapboxgl.Popup()
+						.setHTML('<h1 classe="item">Borne IF</h1>'+
+									'<p><span>Nom:	</span>' 
+									+marker.properties.NOM+
+									'</p>'+
+									'<p><span>Ville:	</span>' 
+									+marker.properties.VILLE+
+									'</p>'+
+									'<p style="padding-bottom:15px;"><span>Entité:	</span>' 
+									+marker.properties.ENTITE+
+									'</p>'
+						)
+					)
 
 				marker.addTo(map);
 				map.on('zoomend', function() {
@@ -341,7 +354,7 @@
 						link.href = '#';
 						link.className = 'title';
 						link.dataPosition = iparc;
-						link.innerHTML = 'Titre n° '+parcelle.features[iparc].properties["TN"];
+						link.innerHTML = 'Titre n° '+parcelle.features[iparc].properties["TN"]+' '+parcelle.features[iparc].properties["INDICE"];
 						link.addEventListener('click', function(e) {
 							// Update the currentFeature to the store associated with the clicked link
 							var clickedListing = parcelle.features[this.dataPosition];
@@ -366,7 +379,7 @@
 				point = currentFeature.properties["CENTROID"].split(',').map(function(n) {return Number(n);})
 				map.flyTo({
 					center: point,
-					zoom: 17
+					zoom: 15
 				});
 			}
 
@@ -377,7 +390,11 @@
 				if (popUps[0]) popUps[0].remove();
 				site_nom = getSiteName(currentFeature.properties["IDSITE"])
 				var popup = new mapboxgl.Popup({ 
-					offset: 25,
+					offset: {
+						'top': [0, 0],
+						'top-left': [0,0],//[linearOffset, (markerHeight - markerRadius - linearOffset) * -1],
+						'top-right': [0,0],//[-linearOffset, (markerHeight - markerRadius - linearOffset) * -1],
+					},
 					 closeOnClick: true 
 					 })
 					.setLngLat(point)
@@ -385,7 +402,7 @@
 					'<h5> Titre n° '+ currentFeature.properties.TN + '</h5>' +
 					'<ul class="list-group">'+
 						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
-						'NOM DU PROPRIETAIRE'+
+						'NOM  PROPRIETE'+
 						'<span class="badge badge-primary badge-pill">'+currentFeature.properties.NOM+'</span>'+
 						'</li>'+
 						'<li class="list-group-item d-flex justify-content-between align-items-center">'+
