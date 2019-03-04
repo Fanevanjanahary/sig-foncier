@@ -72,6 +72,7 @@
 		var site
 		var parcelle
 		var borne
+		var site_point
 
 		$.getJSON("data/site.geojson", function(json){
     		site = json;
@@ -87,6 +88,10 @@
 
 		$.getJSON("data/borne.geojson", function(json){
     		borne = json;
+		});
+
+		$.getJSON("data/site-point.geojson", function(json){
+    		site_point = json;
 		});
 
 		var zoom = 10
@@ -222,6 +227,28 @@
 					else{
 						marker.remove();
 					}
+				})
+			});
+
+			site_point.features.forEach(function(marker) {
+
+				// create a HTML element for each feature
+				var el = document.createElement('div');
+				el.className = 'marker-site'
+
+				// make a marker for each feature and add to the map
+				marker = new mapboxgl.Marker(el)
+					.setLngLat(marker.geometry.coordinates)
+
+				marker.addTo(map);
+				map.on('zoomend', function() {
+					if (map.getZoom() > zoom){
+						marker.remove();
+					}
+					else {
+						marker.addTo(map);
+					}
+					
 				})
 			});
 		
@@ -582,6 +609,15 @@
 
 	.marker-NON {
 		background-image: url('icon/non.png');
+		background-size: cover;
+		width: 30px;
+		height:30px;
+		border-radius: 50%;
+		cursor: pointer;
+	}
+
+	.marker-site{
+		background-image: url('icon/site-marker.png');
 		background-size: cover;
 		width: 30px;
 		height:30px;
